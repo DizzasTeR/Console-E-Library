@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// Declaring our structures
 struct Category {
     unsigned int id;
     string name;
@@ -38,19 +39,20 @@ struct User {
 vector<Category> g_Categories = {Category(0, "-")};
 vector<Book> g_Books = {Book(0, "-", 0)};
 
-// Core
+// Program functionalities
 float PROGRAM_STATE = 1.0f;
 const string ADMIN_PASSWORD = "eadmin";
 unsigned int BOOKS_PER_USER = 2;
 
 // Definitions
-void handleAdminAction(int &);
+void handleAdminAction(User &, int &);
 void handleUserAction(User &, int &);
 void addCategory(unsigned int, const char*);
 void addBook(unsigned int, const char*, unsigned int);
 void removeBook(unsigned int, unsigned int);
 void displayCategories();
-void displayBooks(unsigned int = 0);
+void displayBooks(unsigned int);
+void displayBooks();
 
 bool categoryExists(unsigned int);
 bool bookExists(unsigned int, unsigned int = 0);
@@ -92,6 +94,7 @@ int main()
     addBook(3, "Calculus - II", 5);
     addBook(4, "Algebra", 5);
     system("cls");
+
     // User
     int userInput;
     string strUserInput;
@@ -135,7 +138,7 @@ int main()
     else if(PROGRAM_STATE == 1.2f) {
         cout << "\n(1) Add Category \n(2) Add Book \n(3) Remove Book \n(4) Set books per user limit \n(5) Logout \n";
         cin >> userInput;
-        handleAdminAction(userInput);
+        handleAdminAction(user, userInput);
     }
 
     // User panel
@@ -159,7 +162,9 @@ int main()
         system("cls");
         cout << "* Library Information: " << endl;
         cout << "* Total Categories: " << g_Categories.size()-1 << endl;
-        cout << "* Total Books: " << g_Books.size()-1 << endl << endl << endl;
+        displayCategories();
+        cout << "\n* Total Books: " << g_Books.size()-1;
+        displayBooks();
         PROGRAM_STATE = 1.0;
         continue;
     }
@@ -253,10 +258,25 @@ void displayBooks(unsigned int category_id) {
     for(it = g_Books.begin(); it != g_Books.end(); it++) {
         if(it->id == 0)
             continue;
-        if(it->category_id == category_id) {
+        if(it->category_id == category_id)
             cout << "[" << it->id << "] " << it->name << endl;
-        }
     }
+}
+
+void displayBooks() {
+    cout << "\n";
+    vector<Book>::const_iterator it;
+    unsigned int last_id = 0;
+    for(it = g_Books.begin(); it != g_Books.end(); it++) {
+        if(it->id == 0)
+            continue;
+        if(it->category_id != last_id) {
+            last_id = it->category_id;
+            cout << endl;
+        }
+        cout << "[" << it->id << "] " << it->name << " [" << g_Categories.at(it->category_id).name << "]" << endl;
+    }
+    cout << endl;
 }
 
 Book* getBook(unsigned int category_id, unsigned int book_id) {
@@ -268,9 +288,10 @@ Book* getBook(unsigned int category_id, unsigned int book_id) {
             return &(*it);
         }
     }
+    return nullptr;
 }
 
-void handleAdminAction(int & userInput) {
+void handleAdminAction(User & user, int & userInput) {
     system("cls");
     int l_userInput;
     string l_strUserInput;
@@ -318,9 +339,18 @@ void handleAdminAction(int & userInput) {
         }
         cout << "* Enter book id: ";
         cin >> book_id;
-        if(!bookExists(book_id)) {
+        if(!bookExists(book_id, l_userInput)) {
             cout << "* No book with the given id exists! \n";
             return;
+        }
+        // Check if user has issued this book, take it back if so
+        if(bookExists(book_id, l_userInput)) {
+            string book_name = user.books[l_userInput]->name;
+            int result = user.books.erase(book_id*l_userInput);
+            system("cls");
+            if(result == 1) {
+                cout << "* The book: " << book_name << " has been auto-returned for being removed by administrator \n" << endl;
+            }
         }
         removeBook(book_id, l_userInput);
         break;
