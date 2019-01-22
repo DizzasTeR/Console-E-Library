@@ -198,7 +198,7 @@ void removeBook(unsigned int _id, unsigned int category_id) {
     string _name;
     vector<Book>::const_iterator it;
     for(it = g_Books.begin(); it != g_Books.end(); it++) {
-        if(it->id == _id) {
+        if(it->id == _id && category_id == it->category_id) {
             _name = it->name;
             g_Books.erase(it);
             break;
@@ -221,22 +221,20 @@ int getTotalBooksInCategory(unsigned int category_id) {
 }
 
 bool categoryExists(unsigned int category_id) {
-    try {
-        g_Categories.at(category_id);
-        return true;
-    } catch(exception err) {
-        return false;
+    vector<Category>::const_iterator it;
+    for(it = g_Categories.begin(); it != g_Categories.end(); it++) {
+        if(it->id == category_id) {
+            return true;
+        }
     }
+    return false;
 }
 
 bool bookExists(unsigned int book_id, unsigned int category_id) {
     vector<Book>::const_iterator it;
     for(it = g_Books.begin(); it != g_Books.end(); it++) {
-        if(it->id == book_id) {
-            if(category_id == 0)
-                return true;
-            else if(category_id == category_id)
-                return true;
+        if(it->id == book_id && it->category_id == category_id) {
+            return true;
         }
     }
     return false;
@@ -344,8 +342,9 @@ void handleAdminAction(User & user, int & userInput) {
             return;
         }
         // Check if user has issued this book, take it back if so
-        if(bookExists(book_id, l_userInput)) {
-            string book_name = user.books[l_userInput]->name;
+        if(user.books.find(book_id*l_userInput) != user.books.end()) {
+            cout << "BOOK EXISTS" << endl;
+            string book_name = user.books[l_userInput*book_id]->name;
             int result = user.books.erase(book_id*l_userInput);
             system("cls");
             if(result == 1) {
@@ -400,6 +399,10 @@ void handleUserAction(User & user, int & userInput) {
             cout << "\n* Unable to find book with id " << book_id << "\n";
             return;
         }
+        if(user.books[book_id*l_userInput]) {
+            cout << "\n* You already have the requested book issued \n";
+            return;
+        }
         user.books[book_id*l_userInput] = getBook(l_userInput, book_id);
         system("cls");
         cout << "* Successfully issued book [" << book_id << "] " << getBook(l_userInput, book_id)->name << endl;
@@ -422,8 +425,11 @@ void handleUserAction(User & user, int & userInput) {
         if(!bookExists(book_id, l_userInput)) {
             cout << "\n* Unable to find book with id " << book_id << "\n";
             return;
+        } else if(user.books.find(book_id*l_userInput) == user.books.end()) {
+            cout << "\n* Invalid book and/or category id \n";
+            return;
         }
-        book_name = user.books[l_userInput]->name;
+        book_name = user.books[l_userInput*book_id]->name;
         int result = user.books.erase(book_id*l_userInput);
         system("cls");
         if(result == 1) {

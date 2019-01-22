@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1545371635 source:d:\programming & scripting\code blocks - programs & sources\e-library\main.cpp
+	<iostream>
+
+1548164138 source:d:\programming\code blocks - programs & sources\e-library\main.cpp
+	<iostream>
+	<string>
+	<string.h>
+	<vector>
+	<unordered_map>
+
